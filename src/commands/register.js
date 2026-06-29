@@ -1,0 +1,96 @@
+import {
+  SlashCommandBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+  MessageFlags,
+} from 'discord.js';
+import { supabase } from '../lib/supabase.js';
+
+// 이 명령이 띄우는 모달의 customId. index.js 가 이 값으로 제출을 라우팅합니다.
+export const modalId = 'register-modal';
+
+export const data = new SlashCommandBuilder()
+  .setName('등록하기')
+  .setDescription('코드네임을 등록합니다.');
+
+// 슬래시 명령 실행 → 모달 표시
+export async function execute(interaction) {
+  // showModal 은 인터랙션 수신 후 3초 안에 호출해야 합니다(deferReply 불가).
+  // 기존값 조회는 "있으면 채우고 느리면 포기"하도록 짧은 타임아웃으로 처리합니다.
+  let existing = null;
+  try {
+    const query = supabase
+      .from('users')
+      .select('username')
+      .eq('discord_id', interaction.user.id)
+      .maybeSingle();
+    const timeout = new Promise((resolve) =>
+      setTimeout(() => resolve({ data: null }), 1500)
+    );
+    ({ data: existing } = await Promise.race([query, timeout]));
+  } catch {
+    existing = null;
+  }
+
+  const usernameInput = new TextInputBuilder()
+    .setCustomId('username')
+    .setLabel('코드네임')
+    .setPlaceholder('예: Falcon')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(50);
+
+  if (existing?.username) {
+    usernameInput.setValue(existing.username);
+  }
+
+  const modal = new ModalBuilder()
+    .setCustomId(modalId)
+    .setTitle('코드네임 등록')
+    .addComponents(new ActionRowBuilder().addComponents(usernameInput));
+
+  await interaction.showModal(modal);
+}
+
+// 모달 제출 처리 → Supabase upsert
+export async function handleModal(interaction) {
+  const username = interaction.fields.getTextInputValue('username').trim();
+
+  if (!username) {
+    return interaction.reply({
+      content: '코드네임을 입력해 주세요.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
+  const { error } = await supabase.from('users').upsert(
+    {
+      discord_id: interaction.user.id,
+      username,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'discord_id' }
+  );
+
+  if (error) throw error;
+
+  // 서버에서 유저의 닉네임을 코드네임으로 변경
+  let nickNote = '';
+  if (interaction.inGuild() && interaction.member) {
+    try {
+      await interaction.member.setNickname(username, '코드네임 등록');
+    } catch (err) {
+      // 권한(닉네임 관리) 부족 또는 역할 서열 문제 등
+      console.warn(`닉네임 변경 실패 (${interaction.user.id}):`, err.message);
+      nickNote =
+        '\n⚠️ 닉네임 변경에는 실패했습니다. (봇 권한 또는 역할 서열을 확인해 주세요)';
+    }
+  }
+
+  await interaction.reply({
+    content: `✅ 등록 완료! 코드네임: **${username}**${nickNote}`,
+    flags: MessageFlags.Ephemeral,
+  });
+}
