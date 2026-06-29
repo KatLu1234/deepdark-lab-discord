@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    volumes:
+      # 로컬 SQLite 데이터 영속화 (호스트 ./data <-> 컨테이너 /app/data)
+      - ./data:/app/data
     expose:
       - "3000"
     networks:

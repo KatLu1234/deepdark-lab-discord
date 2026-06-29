@@ -14,9 +14,9 @@ export const config = {
     clientId: required('DISCORD_CLIENT_ID'),
     guildId: process.env.DISCORD_GUILD_ID || null,
   },
-  supabase: {
-    url: required('SUPABASE_URL'),
-    serviceRoleKey: required('SUPABASE_SERVICE_ROLE_KEY'),
+  db: {
+    // 로컬 SQLite 파일 경로. 기본값은 ./data/study-bot.db (도커에서는 볼륨 마운트).
+    path: process.env.DB_PATH || './data/study-bot.db',
   },
   app: {
     port: Number(process.env.PORT) || 3000,

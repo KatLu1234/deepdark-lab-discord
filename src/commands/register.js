@@ -6,7 +6,7 @@ import {
   ActionRowBuilder,
   MessageFlags,
 } from 'discord.js';
-import { supabase } from '../lib/supabase.js';
+import { getUser, upsertUser } from '../lib/db.js';
 
 // 이 명령이 띄우는 모달의 customId. index.js 가 이 값으로 제출을 라우팅합니다.
 export const modalId = 'register-modal';
@@ -18,18 +18,10 @@ export const data = new SlashCommandBuilder()
 // 슬래시 명령 실행 → 모달 표시
 export async function execute(interaction) {
   // showModal 은 인터랙션 수신 후 3초 안에 호출해야 합니다(deferReply 불가).
-  // 기존값 조회는 "있으면 채우고 느리면 포기"하도록 짧은 타임아웃으로 처리합니다.
+  // 로컬 SQLite 조회는 즉시 끝나므로 기존값이 있으면 채워 줍니다.
   let existing = null;
   try {
-    const query = supabase
-      .from('users')
-      .select('username')
-      .eq('discord_id', interaction.user.id)
-      .maybeSingle();
-    const timeout = new Promise((resolve) =>
-      setTimeout(() => resolve({ data: null }), 1500)
-    );
-    ({ data: existing } = await Promise.race([query, timeout]));
+    existing = getUser(interaction.user.id);
   } catch {
     existing = null;
   }
@@ -65,16 +57,7 @@ export async function handleModal(interaction) {
     });
   }
 
-  const { error } = await supabase.from('users').upsert(
-    {
-      discord_id: interaction.user.id,
-      username,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'discord_id' }
-  );
-
-  if (error) throw error;
+  upsertUser(interaction.user.id, username);
 
   // 서버에서 유저의 닉네임을 코드네임으로 변경
   let nickNote = '';

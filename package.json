@@ -1,7 +1,7 @@
 {
   "name": "study-discord-bot",
   "version": "1.0.0",
-  "description": "Study Discord bot with discord.js + Supabase",
+  "description": "Study Discord bot with discord.js + local SQLite",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "better-sqlite3": "^11.3.0",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.0"

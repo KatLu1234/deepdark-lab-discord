@@ -5,3 +5,9 @@ npm-debug.log*
 .DS_Store
 dist/
 *.log
+
+# 로컬 SQLite 데이터
+data/
+*.db
+*.db-shm
+*.db-wal
