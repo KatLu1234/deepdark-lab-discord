@@ -15,8 +15,15 @@ export const config = {
     guildId: process.env.DISCORD_GUILD_ID || null,
   },
   db: {
-    // 로컬 SQLite 파일 경로. 기본값은 ./data/study-bot.db (도커에서는 볼륨 마운트).
-    path: process.env.DB_PATH || './data/study-bot.db',
+    // DATABASE_URL 이 있으면 우선 사용 (예: postgres://user:pass@host:5432/dbname)
+    url: process.env.DATABASE_URL || null,
+    host: process.env.PGHOST || 'localhost',
+    port: Number(process.env.PGPORT) || 5432,
+    user: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD || '',
+    database: process.env.PGDATABASE || 'postgres',
+    // 자체 서명 인증서 등으로 SSL 필요 시 PGSSL=true
+    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false,
   },
   app: {
     port: Number(process.env.PORT) || 3000,

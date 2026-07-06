@@ -4,6 +4,7 @@ import { readdir } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { config } from './config.js';
+import { initDb } from './lib/db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -104,6 +105,7 @@ function startHttpServer() {
 }
 
 async function main() {
+  await initDb();
   await loadCommands();
   startHttpServer();
   await client.login(config.discord.token);

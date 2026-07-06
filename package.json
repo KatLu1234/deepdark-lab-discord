@@ -1,7 +1,7 @@
 {
   "name": "study-discord-bot",
   "version": "1.0.0",
-  "description": "Study Discord bot with discord.js + local SQLite",
+  "description": "Study Discord bot with discord.js + PostgreSQL",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
@@ -13,9 +13,9 @@
     "node": ">=22"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "pg": "^8.13.0"
   }
 }

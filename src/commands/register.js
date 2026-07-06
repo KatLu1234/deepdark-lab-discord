@@ -18,11 +18,12 @@ export const data = new SlashCommandBuilder()
 // 슬래시 명령 실행 → 모달 표시
 export async function execute(interaction) {
   // showModal 은 인터랙션 수신 후 3초 안에 호출해야 합니다(deferReply 불가).
-  // 로컬 SQLite 조회는 즉시 끝나므로 기존값이 있으면 채워 줍니다.
+  // 기존값이 있으면 입력란에 채워 줍니다. DB 조회 실패해도 모달은 그대로 띄웁니다.
   let existing = null;
   try {
-    existing = getUser(interaction.user.id);
-  } catch {
+    existing = await getUser(interaction.user.id);
+  } catch (err) {
+    console.warn('기존 유저 조회 실패:', err.message);
     existing = null;
   }
 
@@ -46,7 +47,7 @@ export async function execute(interaction) {
   await interaction.showModal(modal);
 }
 
-// 모달 제출 처리 → Supabase upsert
+// 모달 제출 처리 → PostgreSQL upsert
 export async function handleModal(interaction) {
   const username = interaction.fields.getTextInputValue('username').trim();
 
@@ -57,7 +58,7 @@ export async function handleModal(interaction) {
     });
   }
 
-  upsertUser(interaction.user.id, username);
+  await upsertUser(interaction.user.id, username);
 
   // 서버에서 유저의 닉네임을 코드네임으로 변경
   let nickNote = '';
